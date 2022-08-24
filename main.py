@@ -1,7 +1,28 @@
-import os
 import discord
+import os
+import requests
+import json
 bot_token = os.environ['TOKEN']
+setlist_token = os.environ['SETLIST_KEY']
 prefix = 'j!'
+
+def get_show():
+    url = 'https://api.setlist.fm/rest/1.0/search/setlists?artistName=grateful%20dead&date=08-05-1977p=1'
+    headers = {'Accept': 'application/json', 'x-api-key': setlist_token}
+    response = requests.get(url, headers=headers)
+    json_data = json.loads(response.text)
+    show_loc = json_data["setlist"][0]["venue"]["name"]
+    sets = json_data["setlist"][0]["sets"]
+    set_one = json_data["setlist"][0]["sets"]["set"][0]["song"]
+    set_two = json_data["setlist"][0]["sets"]["set"][1]["song"]
+    setlist = []
+    for i in set_one:
+        setlist.append(i["name"])
+    for i in set_two:
+        setlist.append(i["name"])
+    # print(sets)
+    print(show_loc)
+    print(setlist)
 
 class MyClient(discord.Client):
     async def on_ready(self):
@@ -50,6 +71,9 @@ class MyClient(discord.Client):
                         embd = discord.Embed(title="Prefix update successful!", description="Your server's prefix is `{0}`".format(prefix), color=0x3467EB)
                         await message.channel.send(embed=embd)
                     return
+            elif args[1] == 'show':
+                get_show()
+                return
             
 
 intents = discord.Intents.default()
