@@ -8,14 +8,14 @@ setlist_token = os.environ['SETLIST_KEY']
 prefix = 'j!'
 
 def validate_date(date):
-    valid_format = re.search('^[0-9]{2}-[0-9]{2}-[0-9]{4}', date)
+    valid_format = re.search('^[0-9]{2}[-/.][0-9]{2}[./-][0-9]{4}$', date)
     if not valid_format:
-        return { 'error': 'Invalid date format' }
-    year = re.findall('[0-9]{4}', date)[0]
+        return { 'error': 'Invalid date format!' }
     month = re.findall('[0-9]{2}', date)[0]
     day = re.findall('[0-9]{2}', date)[1]
+    year = re.findall('[0-9]{4}', date)[0]
     if int(year) < 1965 or int(year) > 2022:
-        return { 'error': 'Date out of range' }
+        return { 'error': 'Date out of range!' }
     return { 'setlist_date': day + '-' + month + '-' + year, 'us_date': month + '-' + day + '-' + year }
 
 def get_show(date: str):
@@ -38,6 +38,15 @@ def get_show(date: str):
 async def send_error(msg, err):
     embd = discord.Embed(title='Command Error!', description=err, color=0xAB0C0C)
     embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Achtung.svg/628px-Achtung.svg.png')
+    await msg.channel.send(embed=embd)
+    return
+
+async def send_info(msg, title, desc, fields=None):
+    embd = discord.Embed(title=title, description=desc, color=0x3467EB)
+    embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png')
+    if fields is not None:
+        for x in fields:
+            embd.add_field(name=x['name'], value=x['value'], inline=False)
     await msg.channel.send(embed=embd)
     return
     
@@ -105,7 +114,7 @@ class MyClient(discord.Client):
             # --- SETLIST --- #
             elif args[1] == 'setlist':
                 if len(args) > 3:
-                    await send_error(message, 'Too many arguments! Use `{0} show help` for help with this command.'.format(prefix))
+                    await send_error(message, 'Too many arguments! Use `{0} setlist help` for help with this command.'.format(prefix))
                     return
                 if args[2] == 'help':
                     embd = discord.Embed(title='Setlist Help', description='A full list of commands can be seen below', color=0x3467EB)
@@ -116,7 +125,7 @@ class MyClient(discord.Client):
                     return
                 is_valid = validate_date(args[2])
                 if 'error' in is_valid:
-                    await send_error(message, ' Use `{0} setlist help` for help with this command.'.format(prefix))
+                    await send_error(message, is_valid['error'] + ' Use `{0} setlist help` for help with this command.'.format(prefix))
                     return
                 else:
                     show = get_show(is_valid['setlist_date'])
