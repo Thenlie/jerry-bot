@@ -16,8 +16,7 @@ def validate_date(date):
         return { 'error': 'Invalid date format' }
     if int(year) < 1965 or int(year) > 2022:
         return { 'error': 'Date out of range' }
-    print(year, day, month)
-    return { 'date': day + '-' + month + '-' + year }
+    return { 'setlist_date': day + '-' + month + '-' + year, 'us_date': month + '-' + day + '-' + year }
     
 
 def get_show(date: str):
@@ -25,6 +24,8 @@ def get_show(date: str):
     headers = {'Accept': 'application/json', 'x-api-key': setlist_token}
     response = requests.get(url, headers=headers)
     json_data = json.loads(response.text)
+    if not 'setlist' in json_data:
+        return { 'error': 'No shows available on this date.'}
     show_loc = json_data['setlist'][0]['venue']['name']
     # sets = json_data['setlist'][0]['sets']
     set_one = json_data['setlist'][0]['sets']['set'][0]['song']
@@ -35,8 +36,9 @@ def get_show(date: str):
     for i in set_two:
         setlist.append(i['name'])
     # print(sets)
-    print(show_loc)
+    # print(show_loc)
     print(setlist)
+    return { 'venue': show_loc, 'setlist': setlist }
 
 class MyClient(discord.Client):
     async def on_ready(self):
@@ -89,7 +91,7 @@ class MyClient(discord.Client):
                         await message.channel.send(embed=embd)
                     return
                     
-            elif args[1] == 'show':
+            elif args[1] == 'setlist':
                 if len(args) > 3:
                     embd = discord.Embed(title='Command Error!', description='Too many arguments! Use `{0} show help` for help with this command.'.format(prefix), color=0xAB0C0C)
                     await message.channel.send(embed=embd)
@@ -101,8 +103,19 @@ class MyClient(discord.Client):
                     await message.channel.send(embed=embd)
                     return
                 else:
-                    print(is_valid['date'])
-                    get_show(is_valid['date'])
+                    show = get_show(is_valid['setlist_date'])
+                    if 'error' in show:
+                        embd = discord.Embed(title='Not Found!', description=show['error'], color=0xAB0C0C)
+                        await message.channel.send(embed=embd)
+                        return
+                    embd = discord.Embed(title=is_valid['us_date'], description=show['venue'], color=0xDEDE4E)
+                    print(show)
+                    list = ''
+                    for i,x in enumerate(show['setlist']):
+                        if len(x) > 1:
+                            list = list + str(i+1) + '. ' + x + '\n'
+                    embd.add_field(name='Setlist', value=list, inline=False)                        
+                    await message.channel.send(embed=embd)
                     return
                 return
             
