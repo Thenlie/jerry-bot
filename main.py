@@ -69,12 +69,12 @@ class MyClient(discord.Client):
                 if len(args) > 2: # argument check
                     await send_error(message, 'Too many arguments! Use `{0} help` for help with this bot.'.format(prefix))
                     return
-                embd = discord.Embed(title='Jerry Bot Help', description='A full list of commands can be seen below', color=0x3467EB)
-                embd.add_field(name='`info`', value='Information about Jerry Bot', inline=False)
-                embd.add_field(name='`prefix`', value='View or change the bot prefix.', inline=False)
-                embd.add_field(name='`setlist`', value='Get a Grateful Dead setlist', inline=False)
-                embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png')
-                await message.channel.send(embed=embd)
+                fields = [
+                    {'name': '`info`', 'value': 'Information about Jerry Bot.'},
+                    {'name': '`prefix`', 'value': 'View or change the bot prefix.'},
+                    {'name': '`setlist`', 'value': 'Get a Grateful Dead setlist.'}
+                ]
+                await send_info(message, 'Jerry Bot Help', 'A full list of commands can be seen below', fields)
                 return
 
             # --- INFO --- #
@@ -82,11 +82,11 @@ class MyClient(discord.Client):
                 if len(args) > 2: # argument check
                     await send_error(message, 'Too many arguments! Use `{0} help` for help with this bot.'.format(prefix))
                     return
-                embd = discord.Embed(title='Jerry Bot Information', description='Created by Thenlie, 2022', color=0x3467EB)
-                embd.add_field(name='Language', value='Python', inline=False)
-                embd.add_field(name='Repository', value='https://github.com/Thenlie/jerry-bot', inline=False)
-                embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png')    
-                await message.channel.send(embed=embd)
+                fields = [
+                    {'name': 'Language', 'value': 'Python'},
+                    {'name': 'Repository', 'value': 'https://github.com/Thenlie/jerry-bot'}
+                ]
+                await send_info(message, 'Jerry Bot Information', 'Created by Thenlie, 2022', fields)
                 return
 
             # --- PREFIX --- #
@@ -96,11 +96,11 @@ class MyClient(discord.Client):
                     await message.channel.send(embed=embd)
                     return
                 elif len(args) == 3 and args[2] == 'help':
-                    embd = discord.Embed(title='Prefix Help', description='A full list of commands can be seen below', color=0x3467EB)
-                    embd.add_field(name='`help`', value='List of prefix commands. `{0} prefix help`'.format(prefix), inline=False)
-                    embd.add_field(name='`set`', value='Set a new prefix. `{0} prefix set [new-prexif]`'.format(prefix), inline=False)
-                    embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png')
-                    await message.channel.send(embed=embd)
+                    fields = [
+                        {'name': '`help`', 'value': 'List of prefix commands. `{0} prefix help`'.format(prefix)},
+                        {'name': '`set`', 'value': 'Set a new prefix. `{0} prefix set [new-prexif]`'.format(prefix)}
+                    ]
+                    await send_info(message, 'Prefix Help', 'A full list of commands can be seen below', fields)
                     return
                 elif args[2] == 'set':
                     if len(args) < 5: # argument check
@@ -117,11 +117,11 @@ class MyClient(discord.Client):
                     await send_error(message, 'Too many arguments! Use `{0} setlist help` for help with this command.'.format(prefix))
                     return
                 if args[2] == 'help':
-                    embd = discord.Embed(title='Setlist Help', description='A full list of commands can be seen below', color=0x3467EB)
-                    embd.add_field(name='`help`', value='List of setlist commands. `{0} setlist help`'.format(prefix), inline=False)
-                    embd.add_field(name='`[date]`', value='Get a setlist by date (MM-DD-YYYY). `{0} setlist [date]`'.format(prefix), inline=False)
-                    embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png')
-                    await message.channel.send(embed=embd)
+                    fields = [
+                        {'name': '`help`', 'value': 'List of setlist commands. `{0} setlist help`'.format(prefix)},
+                        {'name': '`[date]`', 'value': 'Get a setlist by date (MM-DD-YYYY). `{0} setlist [date]`'.format(prefix)}
+                    ]
+                    await send_info(message, 'Setlist Help', 'A full list of commands can be seen below', fields)
                     return
                 is_valid = validate_date(args[2])
                 if 'error' in is_valid:
@@ -130,7 +130,7 @@ class MyClient(discord.Client):
                 else:
                     show = get_show(is_valid['setlist_date'])
                     if 'error' in show:
-                        embd = discord.Embed(title='Not Found!', description=show['error'], color=0xAB0C0C)
+                        embd = discord.Embed(title='Show Not Found!', description=show['error'], color=0xAB0C0C)
                         embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Achtung.svg/628px-Achtung.svg.png')
                         await message.channel.send(embed=embd)
                         return
