@@ -86,7 +86,7 @@ class MyClient(discord.Client):
                     embd = discord.Embed(title='Jerry Bot Prefix', description='Your server\'s prefix is `{0}`. \n Use `{0} prefix help` for a prefix help.'.format(prefix), color=0x3467EB)
                     await message.channel.send(embed=embd)
                     return
-                elif args[2] == 'help':
+                elif len(args) == 3 and args[2] == 'help':
                     embd = discord.Embed(title='Prefix Help', description='A full list of commands can be seen below', color=0x3467EB)
                     embd.add_field(name='`help`', value='List of prefix commands. `{0} prefix help`'.format(prefix), inline=False)
                     embd.add_field(name='`set`', value='Set a new prefix. `{0} prefix set [new-prexif]`'.format(prefix), inline=False)
@@ -94,13 +94,12 @@ class MyClient(discord.Client):
                     await message.channel.send(embed=embd)
                     return
                 elif args[2] == 'set':
-                    if len(args) > 4: # argument check
-                        await send_error(message, 'Too many arguments! Use `{0} prefix help` for help with this command.'.format(prefix))
-                        return
-                    else:
+                    if len(args) < 5: # argument check
                         prefix = args[3]
                         embd = discord.Embed(title='Prefix update successful!', description='Your server\'s prefix is `{0}`'.format(prefix), color=0x3467EB)
                         await message.channel.send(embed=embd)
+                else :
+                    await send_error(message, 'Too many arguments! Use `{0} prefix help` for help with this command.'.format(prefix))
                     return
                     
             # --- SETLIST --- #
