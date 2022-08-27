@@ -3,11 +3,12 @@ import re
 import os
 import requests
 import json
+from datetime import datetime
 bot_token = os.environ['TOKEN']
 setlist_token = os.environ['SETLIST_KEY']
 prefix = 'j!'
 
-def validate_date(date):
+def validate_date(date: str):
     valid_format = re.search('^[0-9]{2}[-/.][0-9]{2}[./-][0-9]{4}$', date)
     if not valid_format:
         return { 'error': 'Invalid date format!' }
@@ -23,17 +24,33 @@ def get_show(date: str):
     headers = {'Accept': 'application/json', 'x-api-key': setlist_token}
     response = requests.get(url, headers=headers)
     json_data = json.loads(response.text)
+    print(json_data)
     if not 'setlist' in json_data:
         return { 'error': 'No shows available on this date.'}
     show_loc = json_data['setlist'][0]['venue']['name']
-    set_one = json_data['setlist'][0]['sets']['set'][0]['song']
-    set_two = json_data['setlist'][0]['sets']['set'][1]['song']
     setlist = []
-    for i in set_one:
-        setlist.append(i['name'])
-    for i in set_two:
-        setlist.append(i['name'])
+    for i in json_data['setlist'][0]['sets']['set']:
+        for j in i['song']:
+            setlist.append(j['name'])
     return { 'venue': show_loc, 'setlist': setlist }
+
+def get_todays_shows(date: str):
+    day = re.findall('[0-9]{2}', date)[0]
+    month = re.findall('[0-9]{2}', date)[1]
+    year = re.findall('[0-9]{4}', date)[0]
+    shows = []
+    for i in range(1965, int(year)):
+        print(month + '-' + day + '-' + str(i))
+        show = get_show(day + '-' + month + '-' + str(i))
+        if 'error' in show:
+            continue
+        else:
+            shows.append({'venue': show['venue'], 'date': day + '-' + month + '-' + str(i)})
+    if len(shows) > 0:
+        return shows
+    else:
+        return 0
+    
 
 async def send_error(msg, err):
     embd = discord.Embed(title='Command Error!', description=err, color=0xAB0C0C)
@@ -119,10 +136,27 @@ class MyClient(discord.Client):
                 if args[2] == 'help':
                     fields = [
                         {'name': '`help`', 'value': 'List of setlist commands. `{0} setlist help`'.format(prefix)},
-                        {'name': '`[date]`', 'value': 'Get a setlist by date (MM-DD-YYYY). `{0} setlist [date]`'.format(prefix)}
+                        {'name': '`[date]`', 'value': 'Get a setlist by date (MM-DD-YYYY). `{0} setlist [date]`'.format(prefix)},
+                        {'name': '`[today]`', 'value': 'Get all shows performed on today\'s date. `{0} today`'.format(prefix)},
                     ]
                     await send_info(message, 'Setlist Help', 'A full list of commands can be seen below', fields)
                     return
+                elif args[2] == 'today':
+                    show = get_todays_shows(datetime.today().strftime('%d-%m-%Y'))
+                    if show == 0:
+                        embd = discord.Embed(title='No Shows Found Today!', description='No shows were played on this date, or I just couldn\'t find any', color=0xAB0C0C)
+                        embd.set_thumbnail(url='https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Achtung.svg/628px-Achtung.svg.png')
+                        await message.channel.send(embed=embd)
+                    else:
+                        embd = discord.Embed(title='Today\'s Shows', description=datetime.today().strftime('%m-%d-%Y'), color=0xDEDE4E)
+                        list = ''
+                        for i,x in enumerate(show):
+                            if len(x) > 1:
+                                list = list + x['date'] + ' ' + x['venue'] + '\n'
+                        embd.add_field(name='Shows', value=list, inline=False)   
+                        embd.set_footer(text='Information from Setlist.fm (may be incomplete)')
+                        await message.channel.send(embed=embd)
+                        return
                 is_valid = validate_date(args[2])
                 if 'error' in is_valid:
                     await send_error(message, is_valid['error'] + ' Use `{0} setlist help` for help with this command.'.format(prefix))
@@ -135,7 +169,6 @@ class MyClient(discord.Client):
                         await message.channel.send(embed=embd)
                         return
                     embd = discord.Embed(title=is_valid['us_date'], description=show['venue'], color=0xDEDE4E)
-                    print(show)
                     list = ''
                     for i,x in enumerate(show['setlist']):
                         if len(x) > 1:
