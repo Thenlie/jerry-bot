@@ -3,6 +3,7 @@ import re
 import os
 import requests
 import json
+from server import keep_alive
 from datetime import datetime
 from replit import db
 
@@ -187,4 +188,5 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = MyClient(intents=intents)
+keep_alive()
 client.run(bot_token)
