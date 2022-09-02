@@ -4,9 +4,12 @@ import os
 import requests
 import json
 from datetime import datetime
+from replit import db
+
 bot_token = os.environ['TOKEN']
 setlist_token = os.environ['SETLIST_KEY']
-prefix = 'j!'
+# prefix = 'j!'
+db['prefix'] = 'j!'
 
 def validate_date(date: str):
     valid_format = re.search('^[0-9]{2}[-/.][0-9]{2}[./-][0-9]{4}$', date)
@@ -45,7 +48,7 @@ def get_todays_shows(date: str):
         if 'error' in show:
             continue
         else:
-            shows.append({'venue': show['venue'], 'date': day + '-' + month + '-' + str(i)})
+            shows.append({'venue': show['venue'], 'date': month + '-' + day + '-' + str(i)})
     if len(shows) > 0:
         return shows
     else:
@@ -75,7 +78,7 @@ class MyClient(discord.Client):
         global prefix
         if message.author.bot == True: # ignore messages from bots
             return
-        if message.content.startswith(prefix + ' '): # correct prefix check
+        if message.content.startswith(db['prefix'] + ' '): # correct prefix check
             args = message.content.split(' ')
             if len(args) < 2: # argument check
                     await send_error(message, 'Please add a command after the bot prefix!')
@@ -84,7 +87,7 @@ class MyClient(discord.Client):
             # --- HELP --- #
             if args[1] == 'help':
                 if len(args) > 2: # argument check
-                    await send_error(message, 'Too many arguments! Use `{0} help` for help with this bot.'.format(prefix))
+                    await send_error(message, 'Too many arguments! Use `{0} help` for help with this bot.'.format(db['prefix']))
                     return
                 fields = [
                     {'name': '`info`', 'value': 'Information about Jerry Bot.'},
@@ -97,7 +100,7 @@ class MyClient(discord.Client):
             # --- INFO --- #
             elif args[1] == 'info':
                 if len(args) > 2: # argument check
-                    await send_error(message, 'Too many arguments! Use `{0} help` for help with this bot.'.format(prefix))
+                    await send_error(message, 'Too many arguments! Use `{0} help` for help with this bot.'.format(db['prefix']))
                     return
                 fields = [
                     {'name': 'Language', 'value': 'Python'},
@@ -109,35 +112,35 @@ class MyClient(discord.Client):
             # --- PREFIX --- #
             elif args[1] == 'prefix':
                 if len(args) == 2:
-                    embd = discord.Embed(title='Jerry Bot Prefix', description='Your server\'s prefix is `{0}`. \n Use `{0} prefix help` for a prefix help.'.format(prefix), color=0x3467EB)
+                    embd = discord.Embed(title='Jerry Bot Prefix', description='Your server\'s prefix is `{0}`. \n Use `{0} prefix help` for a prefix help.'.format(db['prefix']), color=0x3467EB)
                     await message.channel.send(embed=embd)
                     return
                 elif len(args) == 3 and args[2] == 'help':
                     fields = [
-                        {'name': '`help`', 'value': 'List of prefix commands. `{0} prefix help`'.format(prefix)},
-                        {'name': '`set`', 'value': 'Set a new prefix. `{0} prefix set [new-prexif]`'.format(prefix)}
+                        {'name': '`help`', 'value': 'List of prefix commands. `{0} prefix help`'.format(db['prefix'])},
+                        {'name': '`set`', 'value': 'Set a new prefix. `{0} prefix set [new-prexif]`'.format(db['prefix'])}
                     ]
                     await send_info(message, 'Prefix Help', 'A full list of commands can be seen below', fields)
                     return
                 elif args[2] == 'set':
                     if len(args) < 5: # argument check
-                        prefix = args[3]
-                        embd = discord.Embed(title='Prefix update successful!', description='Your server\'s prefix is `{0}`'.format(prefix), color=0x3467EB)
+                        db['prefix'] = args[3]
+                        embd = discord.Embed(title='Prefix update successful!', description='Your server\'s prefix is `{0}`'.format(db['prefix']), color=0x3467EB)
                         await message.channel.send(embed=embd)
                 else :
-                    await send_error(message, 'Too many arguments! Use `{0} prefix help` for help with this command.'.format(prefix))
+                    await send_error(message, 'Too many arguments! Use `{0} prefix help` for help with this command.'.format(db['prefix']))
                     return
                     
             # --- SETLIST --- #
             elif args[1] == 'setlist':
                 if len(args) > 3:
-                    await send_error(message, 'Too many arguments! Use `{0} setlist help` for help with this command.'.format(prefix))
+                    await send_error(message, 'Too many arguments! Use `{0} setlist help` for help with this command.'.format(db['prefix']))
                     return
                 if args[2] == 'help':
                     fields = [
-                        {'name': '`help`', 'value': 'List of setlist commands. `{0} setlist help`'.format(prefix)},
-                        {'name': '`[date]`', 'value': 'Get a setlist by date (MM-DD-YYYY). `{0} setlist [date]`'.format(prefix)},
-                        {'name': '`[today]`', 'value': 'Get all shows performed on today\'s date. `{0} today`'.format(prefix)},
+                        {'name': '`help`', 'value': 'List of setlist commands. `{0} setlist help`'.format(db['prefix'])},
+                        {'name': '`[date]`', 'value': 'Get a setlist by date (MM-DD-YYYY). `{0} setlist [date]`'.format(db['prefix'])},
+                        {'name': '`[today]`', 'value': 'Get all shows performed on today\'s date. `{0} today`'.format(db['prefix'])},
                     ]
                     await send_info(message, 'Setlist Help', 'A full list of commands can be seen below', fields)
                     return
@@ -159,7 +162,7 @@ class MyClient(discord.Client):
                         return
                 is_valid = validate_date(args[2])
                 if 'error' in is_valid:
-                    await send_error(message, is_valid['error'] + ' Use `{0} setlist help` for help with this command.'.format(prefix))
+                    await send_error(message, is_valid['error'] + ' Use `{0} setlist help` for help with this command.'.format(db['prefix']))
                     return
                 else:
                     show = get_show(is_valid['setlist_date'])
